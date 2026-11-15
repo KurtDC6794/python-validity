@@ -97,6 +97,11 @@ if __name__ == "__main__":
         print('Impossible to run innoextract: {}'.format(e))
         sys.exit(1)
 
+    # The data dir is normally created by the systemd service; create it here so the
+    # tool also works standalone.
+    from validitysensor.init_data_dir import init_data_dir
+    init_data_dir()
+
     with tempfile.TemporaryDirectory() as fwdir:
         fwpath = download_and_extract_fw(dev_type, fwdir, fwuri=args.driver_uri)
         shutil.copy(fwpath, PYTHON_VALIDITY_DATA_DIR)

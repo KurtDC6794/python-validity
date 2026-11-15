@@ -53,6 +53,19 @@ e44f7a80d6137794d330b5d026c328a73c907f3f653d411255b7c2f8b425d870a8a53c6630ca864b
 ac2c08c00abf43faa5528a0a8e49b02c507b01b6f1c9abffc669d8c84d7e4a714da32aade7928eca9698b82bee6b72c642c9add80bbd7ccc4121b80220d52b8a
 ''')
 
+# 06cb:0081: the exact table the Windows driver writes (part4=0xb0000, no signature).
+# The 0090 layout + signature gives a corrupt table that later fails writes with 0x04af.
+flash_layout_0081 = [
+    #             id  type  access  offset       size
+    #                       lvl
+    PartitionInfo(1, 4, 7, 0x00001000, 0x00001000),  # cert store
+    PartitionInfo(2, 1, 2, 0x00002000, 0x0003e000),  # xpfwext
+    PartitionInfo(5, 5, 3, 0x00040000, 0x00008000),  # ???
+    PartitionInfo(6, 6, 3, 0x00048000, 0x00008000),  # calibration data
+    PartitionInfo(4, 3, 5, 0x00050000, 0x000b0000),  # template database
+]
+partition_signature_0081 = b''
+
 crypto_backend = default_backend()
 
 
@@ -137,10 +150,13 @@ def init_flash():
     layout = flash_layout_hardcoded
     signature = partition_signature
 
-    if usb.usb_dev().idVendor == 0x138a:
-        if usb.usb_dev().idProduct == 0x0090:
-            layout = flash_layout_hardcoded_0090
-            signature = partition_signature_0090
+    vid, pid = usb.usb_dev().idVendor, usb.usb_dev().idProduct
+    if (vid, pid) == (0x138a, 0x0090):
+        layout = flash_layout_hardcoded_0090
+        signature = partition_signature_0090
+    elif (vid, pid) == (0x06cb, 0x0081):
+        layout = flash_layout_0081
+        signature = partition_signature_0081
 
     partition_flash(info, layout, signature, client_public)
 
